@@ -108,7 +108,10 @@ func (b *Bot) Stop(ctx context.Context) error {
 }
 
 func (b *Bot) initHandlers(bh *th.BotHandler) {
-	bh.Handle(b.handleStartCommand, th.CommandEqual("start"))
+	bh.Handle(b.hStartCmd, th.CommandEqual("start"))
+	bh.Handle(b.hHelpCmd, th.CommandEqual("help"))
+
+	bh.Handle(b.hPingCmd, th.CommandEqual("ping"))
 
 	bh.Handle(b.handleAnyMessage, th.AnyMessage())
 }

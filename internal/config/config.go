@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/dotenv-org/godotenvvault"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -15,14 +16,20 @@ const (
 )
 
 type Config struct {
-	Token   string
-	Webhook Webhook
+	Token    string
+	Webhook  Webhook
+	Messages Messages
 }
 
 type Webhook struct {
 	URL  string
 	Path string
 	Port string
+}
+
+type Messages struct {
+	Start string
+	Help  string
 }
 
 func Load() (*Config, error) {
@@ -53,5 +60,24 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("env var %s is not set", EnvWhPort)
 	}
 
+	msgs, err := loadMessages()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse messages: %w", err)
+	}
+	cfg.Messages = *msgs
+
+	return cfg, nil
+}
+
+func loadMessages() (*Messages, error) {
+	data, err := os.ReadFile("messages.yml")
+	if err != nil {
+		return nil, err
+	}
+
+	var cfg *Messages
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, err
+	}
 	return cfg, nil
 }

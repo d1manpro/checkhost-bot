@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b *Bot) reply(ctx *th.Context, msg *telego.Message, text string) {
+func (b *Bot) reply(ctx *th.Context, msg *telego.Message, text string) *telego.Message {
 	msgThreadID := msg.MessageThreadID
 	if msg.ReplyToMessage != nil {
 		if msg.ReplyToMessage.MessageID == msg.MessageThreadID {
@@ -17,13 +17,20 @@ func (b *Bot) reply(ctx *th.Context, msg *telego.Message, text string) {
 		}
 	}
 
-	_, err := b.Bot.SendMessage(ctx, tu.Message(
-		tu.ID(msg.Chat.ID),
-		text,
-	).WithParseMode("HTML").WithMessageThreadID(msgThreadID))
+	msg, err := b.Bot.SendMessage(ctx, &telego.SendMessageParams{
+		ChatID:          tu.ID(msg.Chat.ID),
+		Text:            text,
+		ParseMode:       "HTML",
+		MessageThreadID: msgThreadID,
+		LinkPreviewOptions: &telego.LinkPreviewOptions{
+			IsDisabled: true,
+		},
+	})
+
 	if err != nil {
 		b.Log.Error("failed to send message", zap.Int64("chatID", msg.Chat.ID), zap.Error(err))
 	}
+	return msg
 }
 
 func (b *Bot) edit(ctx *th.Context, msg *telego.Message, text string) {
