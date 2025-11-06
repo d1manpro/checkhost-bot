@@ -37,6 +37,9 @@ func (b *Bot) hPingCmd(ctx *th.Context, u telego.Update) error {
 				b.reply(ctx, u.Message, "One of specified check-host nodes is invalid domain name. Check available nodes: /nodes")
 				return nil
 			}
+			if len(n) == 3 {
+				n = n + ".node.check-host.net"
+			}
 			nodes = append(nodes, n)
 		}
 	}
