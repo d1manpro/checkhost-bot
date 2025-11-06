@@ -2,7 +2,8 @@ package telegram
 
 import (
 	"fmt"
-	"strconv"
+	"regexp"
+	"strings"
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/mymmrac/telego"
@@ -28,16 +29,15 @@ func (b *Bot) hPingCmd(ctx *th.Context, u telego.Update) error {
 	var maxNodes int
 	var err error
 	var nodes []string
+	re := regexp.MustCompile(`^[a-z]{2}[0-9](?:\.node\.check-host\.net)?$`)
 
 	if len(args) > 1 {
-		maxNodes, err = strconv.Atoi(args[1])
-		if err != nil {
-			for _, n := range args[1:] {
-				if !valid.IsDNSName(n) {
-					b.reply(ctx, u.Message, "One of specified check-host nodes is invalid domain name. Check avaliable nodes: /nodes")
-				}
-				nodes = append(nodes, n)
+		for _, n := range args[1:] {
+			if !re.MatchString(n) {
+				b.reply(ctx, u.Message, "One of specified check-host nodes is invalid domain name. Check available nodes: /nodes")
+				return nil
 			}
+			nodes = append(nodes, n)
 		}
 	}
 
@@ -55,7 +55,7 @@ Node <code>%s</code>
     Result: <b>%s</b>
     Time: <b>%.3f</b> ms
     IP: <code>%s</code>
-`, n, d.Status, d.Time*1000, d.IP)
+`, strings.TrimSuffix(n, ".node.check-host.net"), d.Status, d.Time*1000, d.IP)
 
 		if len(textResult) > 4000 {
 			b.reply(ctx, u.Message, fmt.Sprintf(`Ping server <b><code>%s</code></b>
