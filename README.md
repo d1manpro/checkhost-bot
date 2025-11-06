@@ -1,1 +1,1 @@
-# check-host-bot
+# checkhost-bot
