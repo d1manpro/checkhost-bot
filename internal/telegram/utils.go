@@ -2,7 +2,9 @@ package telegram
 
 import (
 	"errors"
+	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	valid "github.com/asaskevich/govalidator"
@@ -76,19 +78,23 @@ func (b *Bot) parseArgs(msg string) (*cmdArgs, error) {
 	if len(args) == 0 {
 		return nil, ErrEmpty
 	} else {
-		if (!valid.IsIPv4(args[0]) && !valid.IsDNSName(args[0])) || !strings.Contains(args[0], ".") {
+		if !isTargetValid(args[0]) {
 			return nil, ErrInvalidTarget
 		}
 	}
 
 	var maxNodes int
+	var err error
 	var nodes []string
 
 	if len(args) > 1 {
-		for _, n := range args[1:] {
-			n := completeNode(n)
-			if n != "" {
-				nodes = append(nodes, n)
+		maxNodes, err = strconv.Atoi(args[1])
+		if err != nil {
+			for _, n := range args[1:] {
+				n := completeNode(n)
+				if n != "" {
+					nodes = append(nodes, n)
+				}
 			}
 		}
 	}
@@ -98,6 +104,19 @@ func (b *Bot) parseArgs(msg string) (*cmdArgs, error) {
 		Nodes:    nodes,
 		MaxNodes: maxNodes,
 	}, nil
+}
+
+func isTargetValid(target string) bool {
+	if (valid.IsIPv4(target) || valid.IsDNSName(target)) && strings.Contains(target, ".") {
+		return true
+	}
+
+	u, err := url.Parse(target)
+	if err == nil && u.Scheme != "" && u.Host != "" {
+		return true
+	}
+
+	return false
 }
 
 func completeNode(n string) string {
