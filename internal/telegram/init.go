@@ -117,6 +117,8 @@ func (b *Bot) initHandlers(bh *th.BotHandler) {
 	bh.Handle(b.hUdpCmd, th.CommandEqual("udp"))
 	bh.Handle(b.hDnsCmd, th.CommandEqual("dns"))
 
+	bh.Handle(b.hNodeCmd, th.CommandEqual("node"))
+
 	bh.Handle(b.handleAnyMessage, th.AnyMessage())
 }
 
