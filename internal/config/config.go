@@ -35,7 +35,7 @@ type Messages struct {
 func Load() (*Config, error) {
 	err := godotenvvault.Load()
 	if err != nil {
-		return nil, fmt.Errorf("Error loading .env file: %v", err)
+		return nil, fmt.Errorf("failed to load .env file: %v", err)
 	}
 
 	cfg := &Config{
