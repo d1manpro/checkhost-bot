@@ -18,7 +18,7 @@ func (b *Bot) hHttpCmd(ctx *th.Context, u telego.Update) error {
 		var text string
 		switch err {
 		case ErrEmpty:
-			text = "You need to specify target (a valid IP address or domain) in the first argument of the command"
+			text = b.Cfg.Messages.Usage["http"]
 		case ErrInvalidTarget:
 			text = "Specified target isn't valid IP address or domain"
 		}

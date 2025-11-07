@@ -50,18 +50,6 @@ func (b *Bot) reply(ctx *th.Context, msg *telego.Message, text string) *telego.M
 	return message
 }
 
-func (b *Bot) edit(ctx *th.Context, msg *telego.Message, text string) {
-	_, err := b.Bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		MessageID: msg.MessageID,
-		ChatID:    msg.Chat.ChatID(),
-		Text:      text,
-		ParseMode: "HTML",
-	})
-	if err != nil {
-		b.Log.Error("failed to edit message", zap.Int64("chatID", msg.Chat.ID), zap.Int("messageID", msg.MessageID), zap.Error(err))
-	}
-}
-
 func (b *Bot) delete(ctx *th.Context, msg *telego.Message) {
 	err := b.Bot.DeleteMessage(ctx, &telego.DeleteMessageParams{MessageID: msg.MessageID, ChatID: msg.Chat.ChatID()})
 	if err != nil {

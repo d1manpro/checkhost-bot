@@ -28,8 +28,10 @@ type Webhook struct {
 }
 
 type Messages struct {
-	Start string
-	Help  string
+	Start string `yaml:"start"`
+	Help  string `yaml:"help"`
+
+	Usage map[string]string `yaml:"usage"`
 }
 
 func Load() (*Config, error) {

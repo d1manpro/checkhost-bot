@@ -18,7 +18,7 @@ func (b *Bot) hDnsCmd(ctx *th.Context, u telego.Update) error {
 		var text string
 		switch err {
 		case ErrEmpty:
-			text = "You need to specify target (a valid IP address or domain) in the first argument of the command"
+			text = b.Cfg.Messages.Usage["dns"]
 		case ErrInvalidTarget:
 			text = "Specified target isn't valid IP address or domain"
 		}

@@ -45,11 +45,10 @@ func (b *Bot) hNodeCmd(ctx *th.Context, u telego.Update) error {
 	}
 
 	b.reply(ctx, u.Message, fmt.Sprintf(`Node info <code>%s</code>
-
-ASN: %s
-IP: %s
-Location: %s
-`, node, nodes[node].ASN, nodes[node].IP, strings.Join(nodes[node].Location, ", ")))
+    ASN: %s
+    IP: %s
+    Location: %s
+`, node, nodes[node].ASN, nodes[node].IP, strings.Join(nodes[node].Location[1:], ", ")))
 
 	return nil
 }
