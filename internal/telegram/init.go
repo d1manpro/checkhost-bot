@@ -119,3 +119,13 @@ func (b *Bot) initHandlers(bh *th.BotHandler) {
 func (b *Bot) handleAnyMessage(ctx *th.Context, u telego.Update) error {
 	return nil
 }
+
+func (b *Bot) hStartCmd(ctx *th.Context, u telego.Update) error {
+	b.reply(ctx, u.Message, b.Cfg.Messages.Start)
+	return nil
+}
+
+func (b *Bot) hHelpCmd(ctx *th.Context, u telego.Update) error {
+	b.reply(ctx, u.Message, b.Cfg.Messages.Help)
+	return nil
+}
