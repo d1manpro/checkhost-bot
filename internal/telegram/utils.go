@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"errors"
+	"net"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -107,6 +108,17 @@ func (b *Bot) parseArgs(msg string) (*cmdArgs, error) {
 }
 
 func isTargetValid(target string) bool {
+	host, port, err := net.SplitHostPort(target)
+	if err == nil {
+		if portNum, err := strconv.Atoi(port); err != nil || portNum <= 0 || portNum > 65535 {
+			return false
+		}
+		if valid.IsIPv4(host) || (valid.IsDNSName(host) && strings.Contains(host, ".")) {
+			return true
+		}
+		return false
+	}
+
 	if (valid.IsIPv4(target) || valid.IsDNSName(target)) && strings.Contains(target, ".") {
 		return true
 	}
