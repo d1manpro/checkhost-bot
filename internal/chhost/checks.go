@@ -59,3 +59,21 @@ func (c *ChHost) CheckTCP(hostname string, maxNodes int, nodes []string) (checkh
 
 	return res, req.PermanentLink, nil
 }
+
+func (c *ChHost) CheckUDP(hostname string, maxNodes int, nodes []string) (checkhost.UDPResult, string, error) {
+	req, err := c.Client.CheckUDP(checkhost.RequestData{
+		Host:     hostname,
+		MaxNodes: maxNodes,
+		Nodes:    nodes,
+	})
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to request check: %w", err)
+	}
+
+	res, err := c.Client.WaitUDPResult(req.RequestID, c.Timeout, c.Interval)
+	if err != nil {
+		return nil, req.PermanentLink, fmt.Errorf("failed to parse check result: %w", err)
+	}
+
+	return res, req.PermanentLink, nil
+}

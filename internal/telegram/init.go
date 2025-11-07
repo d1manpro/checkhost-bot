@@ -114,6 +114,7 @@ func (b *Bot) initHandlers(bh *th.BotHandler) {
 	bh.Handle(b.hPingCmd, th.CommandEqual("ping"))
 	bh.Handle(b.hHttpCmd, th.CommandEqual("http"))
 	bh.Handle(b.hTcpCmd, th.CommandEqual("tcp"))
+	bh.Handle(b.hUdpCmd, th.CommandEqual("udp"))
 
 	bh.Handle(b.handleAnyMessage, th.AnyMessage())
 }
