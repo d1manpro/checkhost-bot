@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b *Bot) hUdpCmd(ctx *th.Context, u telego.Update) error {
+func (b *Bot) hDnsCmd(ctx *th.Context, u telego.Update) error {
 	msg := b.reply(ctx, u.Message, "Processing...")
 	defer b.delete(ctx, msg)
 
@@ -26,7 +26,7 @@ func (b *Bot) hUdpCmd(ctx *th.Context, u telego.Update) error {
 		return nil
 	}
 
-	res, link, err := b.CH.CheckUDP(args.Target, args.MaxNodes, args.Nodes)
+	res, link, err := b.CH.CheckDNS(args.Target, args.MaxNodes, args.Nodes)
 	if err != nil {
 		b.reply(ctx, u.Message, "An error occurred while retrieving the check result. You can report error using /report")
 		b.Log.Error("failed to check ping", zap.String("target", args.Target), zap.String("link", link), zap.Error(err))
@@ -40,12 +40,13 @@ func (b *Bot) hUdpCmd(ctx *th.Context, u telego.Update) error {
 		}
 		textResult += fmt.Sprintf(`
 Node <code>%s</code>
-    Time: <b>%.3f</b> ms
-    IP: <code>%s</code>%s
-`, strings.TrimSuffix(n, ".node.check-host.net"), d.Time*1000, d.IP, d.Error)
+    IPv4: <b>%s</b>
+    IPv6: <b>%s</b>
+    TTL: <b>%d</b> s%s
+`, strings.TrimSuffix(n, ".node.check-host.net"), strings.Join(d.A, "; "), strings.Join(d.AAAA, "; "), *d.TTL, d.Error)
 
 		if len(textResult) > 4000 {
-			b.reply(ctx, u.Message, fmt.Sprintf(`UDP check <code>%s</code>
+			b.reply(ctx, u.Message, fmt.Sprintf(`DNS check <code>%s</code>
 <a href="%s">Check result</a>
 %s`, args.Target, link, textResult))
 
@@ -53,7 +54,7 @@ Node <code>%s</code>
 		}
 	}
 
-	b.reply(ctx, u.Message, fmt.Sprintf(`UDP check <code>%s</code>
+	b.reply(ctx, u.Message, fmt.Sprintf(`DNS check <code>%s</code>
 <a href="%s">Check result</a>
 %s`, args.Target, link, textResult))
 

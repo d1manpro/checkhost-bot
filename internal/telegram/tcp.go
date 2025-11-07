@@ -35,14 +35,13 @@ func (b *Bot) hTcpCmd(ctx *th.Context, u telego.Update) error {
 
 	var textResult string
 	for n, d := range res {
-		if d.Error == "" {
-			d.Error = "null"
+		if d.Error != "" {
+			d.Error = fmt.Sprintf("\n    Error: <b>%s</b>", d.Error)
 		}
 		textResult += fmt.Sprintf(`
 Node <code>%s</code>
     Time: <b>%.3f</b> ms
-    IP: <code>%s</code>
-    Error: <b>%s</b>
+    IP: <code>%s</code>%s
 `, strings.TrimSuffix(n, ".node.check-host.net"), d.Time*1000, d.IP, d.Error)
 
 		if len(textResult) > 4000 {

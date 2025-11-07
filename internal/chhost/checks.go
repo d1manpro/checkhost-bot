@@ -77,3 +77,21 @@ func (c *ChHost) CheckUDP(hostname string, maxNodes int, nodes []string) (checkh
 
 	return res, req.PermanentLink, nil
 }
+
+func (c *ChHost) CheckDNS(hostname string, maxNodes int, nodes []string) (checkhost.DNSResult, string, error) {
+	req, err := c.Client.CheckDNS(checkhost.RequestData{
+		Host:     hostname,
+		MaxNodes: maxNodes,
+		Nodes:    nodes,
+	})
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to request check: %w", err)
+	}
+
+	res, err := c.Client.WaitDNSResult(req.RequestID, c.Timeout, c.Interval)
+	if err != nil {
+		return nil, req.PermanentLink, fmt.Errorf("failed to parse check result: %w", err)
+	}
+
+	return res, req.PermanentLink, nil
+}
