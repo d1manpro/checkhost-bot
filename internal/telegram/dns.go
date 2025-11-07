@@ -29,7 +29,7 @@ func (b *Bot) hDnsCmd(ctx *th.Context, u telego.Update) error {
 	res, link, err := b.CH.CheckDNS(args.Target, args.MaxNodes, args.Nodes)
 	if err != nil {
 		b.reply(ctx, u.Message, "An error occurred while retrieving the check result. You can report error using /report")
-		b.Log.Error("failed to check ping", zap.String("target", args.Target), zap.String("link", link), zap.Error(err))
+		b.Log.Error("failed to check dns", zap.String("target", args.Target), zap.String("link", link), zap.Error(err))
 		return nil
 	}
 
