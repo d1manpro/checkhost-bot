@@ -66,13 +66,13 @@ func (b *Bot) Start(ctx context.Context) error {
 
 	bh.Use(func(ctx *th.Context, u telego.Update) error {
 		if u.Message != nil {
-			b.Log.Info("handling message", zap.Int("updateID", u.UpdateID), zap.Int64("userID", u.Message.From.ID), zap.String("text", u.Message.Text))
+			b.Log.Info("handling message", zap.Int("updateID", u.UpdateID), zap.String("text", u.Message.Text))
 		} else if u.CallbackQuery != nil {
-			b.Log.Info("handling callback-query", zap.Int("updateID", u.UpdateID), zap.Int64("userID", u.CallbackQuery.From.ID), zap.String("data", u.CallbackQuery.Data))
+			b.Log.Info("handling callback-query", zap.Int("updateID", u.UpdateID), zap.String("data", u.CallbackQuery.Data))
 		}
 		if u.Message != nil && u.Message.Chat.Type != "private" {
-			b.Log.Info("chat_type != private", zap.Int("updateID", u.UpdateID), zap.Int64("userID", u.Message.From.ID), zap.String("text", u.Message.Text))
-			b.reply(ctx, u.Message, "Эту команду можно использовать только в личных сообщениях бота")
+			b.Log.Info("chat_type != private", zap.Int("updateID", u.UpdateID), zap.String("text", u.Message.Text))
+			b.reply(ctx, u.Message, "Bot avaliable only in private chats")
 			return nil
 		}
 		return ctx.Next(u)
@@ -113,6 +113,7 @@ func (b *Bot) initHandlers(bh *th.BotHandler) {
 
 	bh.Handle(b.hPingCmd, th.CommandEqual("ping"))
 	bh.Handle(b.hHttpCmd, th.CommandEqual("http"))
+	bh.Handle(b.hTcpCmd, th.CommandEqual("tcp"))
 
 	bh.Handle(b.handleAnyMessage, th.AnyMessage())
 }

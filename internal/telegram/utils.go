@@ -33,7 +33,7 @@ func (b *Bot) reply(ctx *th.Context, msg *telego.Message, text string) *telego.M
 		}
 	}
 
-	msg, err := b.Bot.SendMessage(ctx, &telego.SendMessageParams{
+	message, err := b.Bot.SendMessage(ctx, &telego.SendMessageParams{
 		ChatID:          tu.ID(msg.Chat.ID),
 		Text:            text,
 		ParseMode:       "HTML",
@@ -46,7 +46,7 @@ func (b *Bot) reply(ctx *th.Context, msg *telego.Message, text string) *telego.M
 	if err != nil {
 		b.Log.Error("failed to send message", zap.Int64("chatID", msg.Chat.ID), zap.Error(err))
 	}
-	return msg
+	return message
 }
 
 func (b *Bot) edit(ctx *th.Context, msg *telego.Message, text string) {
