@@ -25,7 +25,7 @@ func main() {
 	}
 	log.Info("Config succesfilly loaded")
 
-	ch := chhost.New()
+	ch := chhost.New(log)
 
 	tgBot, err := telegram.NewBot(log, cfg, ch)
 	if err != nil {
