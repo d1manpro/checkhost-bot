@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/mymmrac/telego"
@@ -49,6 +50,47 @@ ASN: %s
 IP: %s
 Location: %s
 `, node, nodes[node].ASN, nodes[node].IP, strings.Join(nodes[node].Location, ", ")))
+
+	return nil
+}
+
+func (b *Bot) hNodesCmd(ctx *th.Context, u telego.Update) error {
+	msg := b.reply(ctx, u.Message, "Processing...")
+	defer b.delete(ctx, msg)
+
+	nodes, err := b.CH.GetNodes()
+	if err != nil {
+		b.reply(ctx, u.Message, "An error occurred while retrieving the check result. You can report error using /report")
+		b.Log.Error("failed to get nodes", zap.Error(err))
+		return nil
+	}
+
+	var textNodes string
+	var page int = 1
+
+	keys := make([]string, 0, len(nodes))
+	for k := range nodes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := nodes[k]
+		textNodes += fmt.Sprintf(
+			"\n<code>%s</code> - %s, %s (<code>%s</code>)",
+			strings.TrimSuffix(k, ".node.check-host.net"),
+			v.Location[1],
+			v.Location[2],
+			v.IP,
+		)
+		if len(textNodes) > 2000 {
+			b.reply(ctx, u.Message, fmt.Sprintf("Avaliable check-host nodes - page %d: %s", page, textNodes))
+			page += 1
+			textNodes = ""
+		}
+	}
+
+	b.reply(ctx, u.Message, fmt.Sprintf("Avaliable check-host nodes - page %d: %s", page, textNodes))
 
 	return nil
 }
