@@ -64,20 +64,7 @@ func (b *Bot) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to create BotHandler: %w", err)
 	}
 
-	bh.Use(func(ctx *th.Context, u telego.Update) error {
-		if u.Message != nil {
-			b.Log.Info("handling message", zap.Int("updateID", u.UpdateID), zap.String("text", u.Message.Text))
-		} else if u.CallbackQuery != nil {
-			b.Log.Info("handling callback-query", zap.Int("updateID", u.UpdateID), zap.String("data", u.CallbackQuery.Data))
-		}
-		if u.Message != nil && u.Message.Chat.Type != "private" {
-			b.Log.Info("chat_type != private", zap.Int("updateID", u.UpdateID), zap.String("text", u.Message.Text))
-			b.reply(ctx, u.Message, "Bot avaliable only in private chats")
-			return nil
-		}
-		return ctx.Next(u)
-	})
-
+	b.setupMiddleware(bh)
 	b.initHandlers(bh)
 
 	go func() {
@@ -97,14 +84,20 @@ func (b *Bot) Start(ctx context.Context) error {
 	return nil
 }
 
-func (b *Bot) Stop(ctx context.Context) error {
-	err := b.Bot.DeleteWebhook(ctx, &telego.DeleteWebhookParams{
-		DropPendingUpdates: true,
+func (b *Bot) setupMiddleware(bh *th.BotHandler) {
+	bh.Use(func(ctx *th.Context, u telego.Update) error {
+		if u.Message != nil {
+			b.Log.Info("handling message", zap.Int("updateID", u.UpdateID), zap.String("text", u.Message.Text))
+		} else if u.CallbackQuery != nil {
+			b.Log.Info("handling callback-query", zap.Int("updateID", u.UpdateID), zap.String("data", u.CallbackQuery.Data))
+		}
+		if u.Message != nil && u.Message.Chat.Type != "private" {
+			b.Log.Info("chat_type != private", zap.Int("updateID", u.UpdateID), zap.String("text", u.Message.Text))
+			b.reply(ctx, u.Message, "Bot avaliable only in private chats")
+			return nil
+		}
+		return ctx.Next(u)
 	})
-	if err != nil {
-		return fmt.Errorf("failed to delete webhook: %w", err)
-	}
-	return nil
 }
 
 func (b *Bot) initHandlers(bh *th.BotHandler) {
@@ -121,6 +114,16 @@ func (b *Bot) initHandlers(bh *th.BotHandler) {
 	bh.Handle(b.hNodesCmd, th.CommandEqual("nodes"))
 
 	bh.Handle(b.handleAnyMessage, th.AnyMessage())
+}
+
+func (b *Bot) Stop(ctx context.Context) error {
+	err := b.Bot.DeleteWebhook(ctx, &telego.DeleteWebhookParams{
+		DropPendingUpdates: true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete webhook: %w", err)
+	}
+	return nil
 }
 
 func (b *Bot) handleAnyMessage(ctx *th.Context, u telego.Update) error {
