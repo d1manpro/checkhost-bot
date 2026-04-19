@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -15,19 +16,23 @@ import (
 )
 
 func main() {
+	cfgPath := flag.String("config", "config/", "path to config directory")
+	debug := flag.Bool("debug", false, "enable debug mode")
+	flag.Parse()
+
 	log := setupLogger()
 	defer log.Sync()
 	log.Info("\n\nStarting...")
 
-	cfg, err := config.Load()
+	err := config.Load(*cfgPath, *debug)
 	if err != nil {
-		log.Fatal("failed to load config", zap.Error(err))
+		panic("failed to load config: " + err.Error())
 	}
 	log.Info("Config succesfilly loaded")
 
 	ch := chhost.New(log)
 
-	tgBot, err := telegram.NewBot(log, cfg, ch)
+	tgBot, err := telegram.NewBot(log, config.Get(), ch)
 	if err != nil {
 		log.Fatal("failed to create telegram bot", zap.Error(err))
 	}

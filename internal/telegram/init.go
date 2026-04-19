@@ -27,7 +27,7 @@ type ErrData struct {
 }
 
 func NewBot(log *zap.Logger, cfg *config.Config, ch *chhost.ChHost) (*Bot, error) {
-	telegoBot, err := telego.NewBot(cfg.Token)
+	telegoBot, err := telego.NewBot(cfg.Bot.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -41,12 +41,12 @@ func NewBot(log *zap.Logger, cfg *config.Config, ch *chhost.ChHost) (*Bot, error
 }
 
 func (b *Bot) Start(ctx context.Context) error {
-	fullWhURL := b.Cfg.Webhook.URL + b.Cfg.Webhook.Path
+	fullWhURL := b.Cfg.Bot.Webhook.URL + b.Cfg.Bot.Webhook.Path
 
 	srv := &fasthttp.Server{}
 
 	updates, err := b.Bot.UpdatesViaWebhook(ctx,
-		telego.WebhookFastHTTP(srv, b.Cfg.Webhook.Path, b.Bot.SecretToken()),
+		telego.WebhookFastHTTP(srv, b.Cfg.Bot.Webhook.Path, b.Bot.SecretToken()),
 		telego.WithWebhookSet(ctx,
 			&telego.SetWebhookParams{
 				URL:            fullWhURL,
@@ -75,12 +75,12 @@ func (b *Bot) Start(ctx context.Context) error {
 	}()
 
 	go func() {
-		err := srv.ListenAndServe(":" + b.Cfg.Webhook.Port)
+		err := srv.ListenAndServe(":" + b.Cfg.Bot.Webhook.Port)
 		if err != nil {
 			b.Log.Fatal("server error", zap.Error(err))
 		}
 	}()
-	b.Log.Info("Webhook server started", zap.String("url", fullWhURL), zap.String("port", b.Cfg.Webhook.Port))
+	b.Log.Info("Webhook server started", zap.String("url", fullWhURL), zap.String("port", b.Cfg.Bot.Webhook.Port))
 	return nil
 }
 

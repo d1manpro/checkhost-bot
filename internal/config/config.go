@@ -3,22 +3,35 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"time"
 
-	"github.com/dotenv-org/godotenvvault"
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v2"
 )
 
+var config *Config
+
 const (
-	EnvToken  = "TOKEN"
-	EnvWhURL  = "WH_URL"
-	EnvWhPath = "WH_PATH"
-	EnvWhPort = "WH_PORT"
+	EnvDebug    = "DEBUG"
+	EnvTimezone = "TZ"
+
+	EnvToken       = "TOKEN"
+	EnvWebhookURL  = "WH_URL"
+	EnvWebhookPath = "WH_PATH"
+	EnvWebhookPort = "WH_PORT"
 )
 
 type Config struct {
-	Token    string
-	Webhook  Webhook
+	Debug    bool
+	Timezone *time.Location
+	Bot      Bot
 	Messages Messages
+}
+
+type Bot struct {
+	Token   string
+	Webhook Webhook
 }
 
 type Webhook struct {
@@ -34,45 +47,48 @@ type Messages struct {
 	Usage map[string]string `yaml:"usage"`
 }
 
-func Load() (*Config, error) {
-	err := godotenvvault.Load()
+func Load(path string, debug bool) error {
+	err := godotenv.Load(path + ".env")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load .env file: %v", err)
+		return fmt.Errorf("error loading env: %w", err)
 	}
 
-	cfg := &Config{
-		Token: os.Getenv(EnvToken),
-		Webhook: Webhook{
-			URL:  os.Getenv(EnvWhURL),
-			Path: os.Getenv(EnvWhPath),
-			Port: os.Getenv(EnvWhPort),
+	if v, err := strconv.ParseBool(os.Getenv(EnvDebug)); err == nil && v {
+		debug = v
+	}
+
+	loc, err := time.LoadLocation(requireEnv(EnvTimezone))
+	if err != nil {
+		return fmt.Errorf("invalid timezone")
+	}
+	time.Local = loc
+
+	messages, err := loadMessages(path)
+	if err != nil {
+		return fmt.Errorf("error loading messages.yml: %w", err)
+	}
+	if messages == nil {
+		return fmt.Errorf("messages is nil")
+	}
+
+	config = &Config{
+		Debug:    debug,
+		Timezone: loc,
+		Bot: Bot{
+			Token: requireEnv(EnvToken),
+			Webhook: Webhook{
+				URL:  requireEnv(EnvWebhookURL),
+				Path: requireEnv(EnvWebhookPath),
+				Port: requireEnv(EnvWebhookPort),
+			},
 		},
+		Messages: *messages,
 	}
-
-	if cfg.Token == "" {
-		return nil, fmt.Errorf("env var %s is not set", EnvToken)
-	}
-	if cfg.Webhook.URL == "" {
-		return nil, fmt.Errorf("env var %s is not set", EnvWhURL)
-	}
-	if cfg.Webhook.Path == "" {
-		return nil, fmt.Errorf("env var %s is not set", EnvWhPath)
-	}
-	if cfg.Webhook.Port == "" {
-		return nil, fmt.Errorf("env var %s is not set", EnvWhPort)
-	}
-
-	msgs, err := loadMessages()
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse messages: %w", err)
-	}
-	cfg.Messages = *msgs
-
-	return cfg, nil
+	return nil
 }
 
-func loadMessages() (*Messages, error) {
-	data, err := os.ReadFile("messages.yml")
+func loadMessages(path string) (*Messages, error) {
+	data, err := os.ReadFile(path + "messages.yml")
 	if err != nil {
 		return nil, err
 	}
@@ -82,4 +98,19 @@ func loadMessages() (*Messages, error) {
 		return nil, err
 	}
 	return cfg, nil
+}
+
+func requireEnv(key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		panic("env " + key + " is required")
+	}
+	return v
+}
+
+func Get() *Config {
+	if config == nil {
+		panic("config not loaded")
+	}
+	return config
 }
