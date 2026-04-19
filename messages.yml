@@ -16,7 +16,7 @@ help: |
   /udp target [max_nodes|nodes...] - Check UDP reachability (host:port)
   /dns target [max_nodes|nodes...] - Check DNS records
 
-  /node <node_name> - Show information about a specific node
+  /node node_name - Show information about a specific node
   /nodes - List all available nodes
 
   <code>target</code> - domain, IP, or host:port
