@@ -1,0 +1,33 @@
+start: |
+  <b>Welcome to CheckHost Bot!</b>
+
+  I can help you check the status of hosts, domains, and services using check-host.net nodes.
+
+  Use /help to see the list of available commands and how to use them.
+
+help: |
+  <b>CheckHost Bot Help</b>
+
+  Use the commands below to perform network checks via <a href="https://check-host.net">check-host.net</a>:
+
+  /ping target [max_nodes|nodes...] - Check ICMP ping
+  /http target [max_nodes|nodes...] - Check HTTP availability
+  /tcp target [max_nodes|nodes...] - Check TCP connectivity (host:port)
+  /udp target [max_nodes|nodes...] - Check UDP reachability (host:port)
+  /dns target [max_nodes|nodes...] - Check DNS records
+
+  /node node_name - Show information about a specific node
+  /nodes - List all available nodes
+
+  <code>target</code> - domain, IP, or host:port
+  <code>node_name</code> - e.g. us1 or us1.node.check-host.net
+
+  Bot works only in private chats.
+
+
+usage:
+  ping: "Usage: /ping target [max_nodes|nodes...] - сheck ICMP ping"
+  http: "Usage: /http target [max_nodes|nodes...] - check HTTP availability of a resource"
+  tcp: "Usage: /tcp target [max_nodes|nodes...] - check TCP connectivity to host:port"
+  udp: "Usage: /udp target [max_nodes|nodes...] - check UDP reachability of host:port"
+  dns: "Usage: /dns target [max_nodes|nodes...] - check DNS resolution of a domain"
