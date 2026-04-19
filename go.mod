@@ -29,5 +29,6 @@ require (
 	github.com/d1manpro/checkhost v1.0.0
 	github.com/mymmrac/telego v1.3.1
 	go.uber.org/multierr v1.10.0 // indirect
+	golang.org/x/net v0.53.0
 	gopkg.in/yaml.v2 v2.4.0
 )

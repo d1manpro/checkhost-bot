@@ -3,9 +3,14 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/d1manpro/checkhost-bot/internal/chhost"
 	"github.com/d1manpro/checkhost-bot/internal/config"
+	"golang.org/x/net/proxy"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -28,7 +33,56 @@ type ErrData struct {
 }
 
 func NewBot(log *zap.Logger, cfg *config.Config, ch *chhost.ChHost) (*Bot, error) {
-	telegoBot, err := telego.NewBot(cfg.Bot.Token)
+	var httpClient *http.Client
+	if cfg.Bot.Proxy != "" {
+		u, err := url.Parse(cfg.Bot.Proxy)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Info("Using SOCKS5 proxy", zap.String("host", u.Host))
+
+		var auth *proxy.Auth
+		if u.User != nil {
+			password, _ := u.User.Password()
+			auth = &proxy.Auth{
+				User:     u.User.Username(),
+				Password: password,
+			}
+		}
+
+		dialer, err := proxy.SOCKS5("tcp", u.Host, auth, proxy.Direct)
+		if err != nil {
+			return nil, err
+		}
+
+		transport := &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				return dialer.Dial(network, addr)
+			},
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
+
+		httpClient = &http.Client{
+			Transport: transport,
+			Timeout:   30 * time.Second,
+		}
+	}
+
+	var telegoBot *telego.Bot
+	var err error
+
+	if httpClient != nil {
+		telegoBot, err = telego.NewBot(
+			cfg.Bot.Token,
+			telego.WithHTTPClient(httpClient),
+		)
+	} else {
+		telegoBot, err = telego.NewBot(cfg.Bot.Token)
+	}
 	if err != nil {
 		return nil, err
 	}

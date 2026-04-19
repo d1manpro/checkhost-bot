@@ -18,6 +18,7 @@ const (
 
 	EnvToken          = "TOKEN"
 	EnvAdminID        = "ADMIN_ID"
+	EnvProxy          = "PROXY"
 	EnvWebhookEnabled = "WH_ENABLED"
 	EnvWebhookURL     = "WH_URL"
 	EnvWebhookPath    = "WH_PATH"
@@ -34,6 +35,7 @@ type Config struct {
 type Bot struct {
 	Token   string
 	AdminID int64
+	Proxy   string
 	Webhook Webhook
 }
 
@@ -86,6 +88,7 @@ func Load(path string, debug bool) error {
 		Bot: Bot{
 			Token:   requireEnv(EnvToken),
 			AdminID: requireEnvInt64(EnvAdminID),
+			Proxy:   requireEnv(EnvProxy),
 			Webhook: Webhook{
 				Enabled: webhook,
 				URL:     requireEnv(EnvWebhookURL),
