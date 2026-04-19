@@ -9,6 +9,7 @@ import (
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 )
@@ -41,6 +42,29 @@ func NewBot(log *zap.Logger, cfg *config.Config, ch *chhost.ChHost) (*Bot, error
 }
 
 func (b *Bot) Start(ctx context.Context) error {
+	var err error
+	var m string
+	if !b.Cfg.Bot.Webhook.Enabled {
+		err = b.startLongPolling(ctx)
+		m = "long-polling"
+	} else {
+		err = b.startWebhook(ctx)
+		m = "webhook"
+	}
+
+	if err == nil {
+		_, err = b.Bot.SendMessage(ctx, tu.Message(
+			tu.ID(b.Cfg.Bot.AdminID),
+			"[system] bot running via "+m,
+		).WithParseMode("HTML"))
+		if err != nil {
+			b.Log.Error("failed to send bot-start message", zap.Error(err))
+		}
+	}
+	return err
+}
+
+func (b *Bot) startWebhook(ctx context.Context) error {
 	fullWhURL := b.Cfg.Bot.Webhook.URL + b.Cfg.Bot.Webhook.Path
 
 	srv := &fasthttp.Server{}
@@ -84,6 +108,33 @@ func (b *Bot) Start(ctx context.Context) error {
 	return nil
 }
 
+func (b *Bot) startLongPolling(ctx context.Context) error {
+	updates, err := b.Bot.UpdatesViaLongPolling(ctx, &telego.GetUpdatesParams{
+		AllowedUpdates: []string{"message", "callback_query"},
+		Timeout:        20,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to start long polling: %w", err)
+	}
+
+	bh, err := th.NewBotHandler(b.Bot, updates)
+	if err != nil {
+		return fmt.Errorf("failed to create BotHandler: %w", err)
+	}
+
+	b.setupMiddleware(bh)
+	b.initHandlers(bh)
+
+	go func() {
+		if err := bh.Start(); err != nil {
+			b.Log.Fatal("handler error", zap.Error(err))
+		}
+	}()
+
+	b.Log.Info("Long polling started")
+	return nil
+}
+
 func (b *Bot) setupMiddleware(bh *th.BotHandler) {
 	bh.Use(func(ctx *th.Context, u telego.Update) error {
 		if u.Message != nil {
@@ -123,6 +174,14 @@ func (b *Bot) Stop(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete webhook: %w", err)
 	}
+	_, err = b.Bot.SendMessage(ctx, tu.Message(
+		tu.ID(b.Cfg.Bot.AdminID),
+		"[system] bot stopped",
+	).WithParseMode("HTML"))
+	if err != nil {
+		b.Log.Error("failed to send bot-start message", zap.Error(err))
+	}
+
 	return nil
 }
 

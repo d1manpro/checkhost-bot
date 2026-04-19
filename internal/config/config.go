@@ -16,10 +16,12 @@ const (
 	EnvDebug    = "DEBUG"
 	EnvTimezone = "TZ"
 
-	EnvToken       = "TOKEN"
-	EnvWebhookURL  = "WH_URL"
-	EnvWebhookPath = "WH_PATH"
-	EnvWebhookPort = "WH_PORT"
+	EnvToken          = "TOKEN"
+	EnvAdminID        = "ADMIN_ID"
+	EnvWebhookEnabled = "WH_ENABLED"
+	EnvWebhookURL     = "WH_URL"
+	EnvWebhookPath    = "WH_PATH"
+	EnvWebhookPort    = "WH_PORT"
 )
 
 type Config struct {
@@ -31,13 +33,15 @@ type Config struct {
 
 type Bot struct {
 	Token   string
+	AdminID int64
 	Webhook Webhook
 }
 
 type Webhook struct {
-	URL  string
-	Path string
-	Port string
+	Enabled bool
+	URL     string
+	Path    string
+	Port    string
 }
 
 type Messages struct {
@@ -55,6 +59,11 @@ func Load(path string, debug bool) error {
 
 	if v, err := strconv.ParseBool(os.Getenv(EnvDebug)); err == nil && v {
 		debug = v
+	}
+
+	var webhook bool
+	if v, err := strconv.ParseBool(os.Getenv(EnvWebhookEnabled)); err == nil && v {
+		webhook = v
 	}
 
 	loc, err := time.LoadLocation(requireEnv(EnvTimezone))
@@ -75,11 +84,13 @@ func Load(path string, debug bool) error {
 		Debug:    debug,
 		Timezone: loc,
 		Bot: Bot{
-			Token: requireEnv(EnvToken),
+			Token:   requireEnv(EnvToken),
+			AdminID: requireEnvInt64(EnvAdminID),
 			Webhook: Webhook{
-				URL:  requireEnv(EnvWebhookURL),
-				Path: requireEnv(EnvWebhookPath),
-				Port: requireEnv(EnvWebhookPort),
+				Enabled: webhook,
+				URL:     requireEnv(EnvWebhookURL),
+				Path:    requireEnv(EnvWebhookPath),
+				Port:    requireEnv(EnvWebhookPort),
 			},
 		},
 		Messages: *messages,
@@ -106,6 +117,18 @@ func requireEnv(key string) string {
 		panic("env " + key + " is required")
 	}
 	return v
+}
+
+func requireEnvInt64(key string) int64 {
+	v := os.Getenv(key)
+	if v == "" {
+		panic("env " + key + " is required")
+	}
+	i, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		panic("env " + key + " must be int64. Error: " + err.Error())
+	}
+	return i
 }
 
 func Get() *Config {
