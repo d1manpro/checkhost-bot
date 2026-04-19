@@ -3,16 +3,15 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/d1manpro/checkhost-bot/internal/chhost"
 	"github.com/d1manpro/checkhost-bot/internal/config"
+	"github.com/d1manpro/checkhost-bot/internal/logger"
 	"github.com/d1manpro/checkhost-bot/internal/telegram"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 func main() {
@@ -20,15 +19,14 @@ func main() {
 	debug := flag.Bool("debug", false, "enable debug mode")
 	flag.Parse()
 
-	log := setupLogger()
-	defer log.Sync()
-	log.Info("\n\nStarting...")
-
 	err := config.Load(*cfgPath, *debug)
 	if err != nil {
 		panic("failed to load config: " + err.Error())
 	}
-	log.Info("Config succesfilly loaded")
+
+	log, cleanup := logger.Init()
+	defer cleanup()
+	log.Info("\n\nStarting...\n")
 
 	ch := chhost.New(log)
 
@@ -52,29 +50,4 @@ func main() {
 	log.Info("Telegram bot stopped")
 
 	log.Info("Done.")
-}
-
-func setupLogger() *zap.Logger {
-	encoderCfg := zapcore.EncoderConfig{
-		TimeKey:     "time",
-		LevelKey:    "level",
-		MessageKey:  "msg",
-		EncodeTime:  zapcore.TimeEncoderOfLayout("2006.01.02 15:04:05.000"),
-		EncodeLevel: zapcore.CapitalLevelEncoder,
-	}
-
-	encoder := zapcore.NewConsoleEncoder(encoderCfg)
-	consoleCore := zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), zapcore.InfoLevel)
-
-	var cores []zapcore.Core
-	cores = append(cores, consoleCore)
-
-	logFile, err := os.OpenFile("bot.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(fmt.Sprintf("cannot open log file: %v", err))
-	}
-	fileCore := zapcore.NewCore(encoder, zapcore.AddSync(logFile), zapcore.InfoLevel)
-	cores = append(cores, fileCore)
-
-	return zap.New(zapcore.NewTee(cores...))
 }
